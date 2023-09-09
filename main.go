@@ -29,7 +29,11 @@ func main() {
 	// 	log.Fatalln("env variable SERVICE_ENDPOINT is empty")
 	// }
 
-	register, err := handlers.Register(db, db, db, []byte(os.Getenv("JWT_KEY")) /*, serviceEndpoint */)
+	jwtKey := []byte(os.Getenv("JWT_KEY"))
+
+	noAccessTokenURL := os.Getenv("NO_ACCESS_TOKEN_URL")
+
+	register, err := handlers.Register(db, db, db, jwtKey /*, serviceEndpoint */)
 	if err != nil {
 		log.Fatalf("create Register handler: %s", err)
 	}
@@ -38,8 +42,12 @@ func main() {
 
 	r.Post("/login", handlers.Login(
 		db,
-		[]byte(os.Getenv("JWT_KEY")),
+		jwtKey,
 	))
 
-	http.ListenAndServe(":"+os.Getenv("PORT"), r)
+	r.Get("/tags", handlers.GetTags(db, db, noAccessTokenURL, jwtKey))
+
+	r.Post("/tags", handlers.PostTags(db, db, noAccessTokenURL, jwtKey))
+
+	log.Fatalln(http.ListenAndServe(":"+os.Getenv("PORT"), r))
 }

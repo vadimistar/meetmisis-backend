@@ -128,6 +128,117 @@ func (c *Client) SaveVerification(v *models.Verification) error {
 	return nil
 }
 
+func (c *Client) SaveTagsForUser(userID string, tags []string) error {
+	if userID == "" {
+		return errors.New("userID is empty")
+	}
+	if len(tags) == 0 {
+		return errors.New("tags are empty")
+	}
+
+	err := c.createTableIfNotExists("taggedUsers", &models.TaggedUser{})
+	if err != nil {
+		return errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("taggedUsers")
+
+	tu := &models.TaggedUser{
+		UserID: userID,
+		Tags:   tags,
+	}
+
+	err = table.Put(tu).Run()
+	if err != nil {
+		return errors.Wrap(err, "put into the table")
+	}
+
+	return nil
+}
+
+func (c *Client) GetTaggedUser(userID string) (*models.TaggedUser, error) {
+	if userID == "" {
+		return nil, errors.New("userID is empty")
+	}
+
+	err := c.createTableIfNotExists("taggedUsers", &models.TaggedUser{})
+	if err != nil {
+		return nil, errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("taggedUsers")
+
+	user := new(models.TaggedUser)
+
+	it := table.Scan().
+		Filter("'UserID' = ?", userID).
+		Iter()
+	it.Next(user)
+
+	if it.Err() != nil {
+		if errors.Is(it.Err(), dynamo.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(it.Err(), "scan table")
+	}
+
+	return user, nil
+}
+
+func (c *Client) GetTag(tagID string) (*models.Tag, error) {
+	if tagID == "" {
+		return nil, errors.New("tagsIDs are empty")
+	}
+
+	err := c.createTableIfNotExists("tags", &models.Tag{})
+	if err != nil {
+		return nil, errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("tags")
+
+	tag := new(models.Tag)
+
+	it := table.Scan().
+		Filter("'Id' = ?", tagID).
+		Iter()
+	it.Next(tag)
+
+	if it.Err() != nil {
+		if errors.Is(it.Err(), dynamo.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(it.Err(), "scan table")
+	}
+
+	return tag, nil
+}
+
+func (c *Client) SaveTag(tag *models.Tag) error {
+	err := c.createTableIfNotExists("tags", &models.Tag{})
+	if err != nil {
+		return errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("tags")
+
+	if tag.Id == "" {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return errors.Wrap(err, "cannot create random")
+		}
+
+		tag.Id = id.String()
+	}
+
+	err = table.Put(tag).Run()
+	if err != nil {
+		return errors.Wrap(err, "put into the table")
+	}
+
+	return nil
+}
+
 func (c *Client) createTableIfNotExists(name string, from interface{}) error {
 	err := c.db.CreateTable(name, from).Run()
 	if err != nil {

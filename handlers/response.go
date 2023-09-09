@@ -38,3 +38,8 @@ type errorResponse struct {
 	Response
 	Error string `json:"error"`
 }
+
+type successResponse struct {
+	Response
+	Data interface{} `json:"data"`
+}
