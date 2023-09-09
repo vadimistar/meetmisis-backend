@@ -32,6 +32,7 @@ func PostTags(st saveTag, stu saveTagsForUser, noTokenRedirectURL string, jwtKey
 
 		for _, tag := range request.Tags {
 			if tag.Id == "" {
+				// TODO: Refactor saveTag to save multiple tags at once
 				err := st.SaveTag(tag)
 				if err != nil {
 					log.Printf("cannot save tag: %+v (%s)", tag, err)
