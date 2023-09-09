@@ -26,5 +26,11 @@ func userIDFromCookie(w http.ResponseWriter, r *http.Request, noCookieRedirectUR
 		return jwtKey, nil
 	})
 
+	if err != nil {
+		log.Printf("cannot parse jwt: %s", err)
+		respondError(w, r, ErrInternalServer)
+		return ""
+	}
+
 	return claims["userID"].(string)
 }
