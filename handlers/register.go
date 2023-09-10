@@ -117,7 +117,7 @@ func Register(getUser getUser, saveUser saveUser, saveVerify saveVerification, j
 		// 			return
 		// 		}
 
-		tokenString, err := authToken(user.ID, jwtKey)
+		tokenString, err := authToken(newUser.ID, jwtKey)
 		if err != nil {
 			respondError(w, r, ErrInternalServer)
 			log.Printf("error while generate jwt token: %s", err)
@@ -134,11 +134,13 @@ func Register(getUser getUser, saveUser saveUser, saveVerify saveVerification, j
 		})
 
 		w.WriteHeader(http.StatusCreated)
-		render.JSON(w, r, registerLoginResponse{
+		render.JSON(w, r, successResponse{
 			Response: Response{
 				Status: statusSuccess,
 			},
-			Token: tokenString,
+			Data: registerLoginResponse{
+				Token: tokenString,
+			},
 		})
 	}, nil
 }
