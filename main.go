@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/vadimistar/hackathon1/adapters/ydb"
 	"github.com/vadimistar/hackathon1/handlers"
@@ -30,6 +31,8 @@ func main() {
 	// }
 
 	jwtKey := []byte(os.Getenv("JWT_KEY"))
+
+	r.Use(cors.AllowAll().Handler)
 
 	register, err := handlers.Register(db, db, db, jwtKey /*, serviceEndpoint */)
 	if err != nil {
