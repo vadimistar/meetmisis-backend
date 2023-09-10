@@ -16,9 +16,12 @@ type saveTag interface {
 	SaveTag(tag *models.Tag) error
 }
 
-func PostTags(st saveTag, stu saveTagsForUser, noTokenRedirectURL string, jwtKey []byte) http.HandlerFunc {
+func PostTags(st saveTag, stu saveTagsForUser, jwtKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := userIDFromCookie(w, r, noTokenRedirectURL, jwtKey)
+		userID := userIDFromCookie(w, r, jwtKey)
+		if userID == "" {
+			return
+		}
 
 		defer r.Body.Close()
 

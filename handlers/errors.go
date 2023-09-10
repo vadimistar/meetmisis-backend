@@ -16,3 +16,4 @@ var ErrInvalidToken = errors.New("неверный токен подтвержд
 
 // Post
 var ErrInvalidInputData = errors.New("неправильные входные данные")
+var ErrNoAuth = errors.New("нет авторизации")

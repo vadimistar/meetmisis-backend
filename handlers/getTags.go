@@ -8,7 +8,7 @@ import (
 	"github.com/vadimistar/hackathon1/models"
 )
 
-type getUserTagIDs interface {
+type getTaggedUser interface {
 	GetTaggedUser(userID string) (*models.TaggedUser, error)
 }
 
@@ -16,9 +16,12 @@ type getTag interface {
 	GetTag(tagID string) (*models.Tag, error)
 }
 
-func GetTags(gu getUserTagIDs, gt getTag, noTokenRedirectURL string, jwtKey []byte) http.HandlerFunc {
+func GetTags(gu getTaggedUser, gt getTag, jwtKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := userIDFromCookie(w, r, noTokenRedirectURL, jwtKey)
+		userID := userIDFromCookie(w, r, jwtKey)
+		if userID == "" {
+			return
+		}
 
 		taggedUser, err := gu.GetTaggedUser(userID)
 		if err != nil {

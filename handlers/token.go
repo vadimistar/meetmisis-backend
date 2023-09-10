@@ -8,11 +8,11 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func userIDFromCookie(w http.ResponseWriter, r *http.Request, noCookieRedirectURL string, jwtKey []byte) string {
+func userIDFromCookie(w http.ResponseWriter, r *http.Request, jwtKey []byte) string {
 	tokenCookie, err := r.Cookie("meetmisis-token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			http.Redirect(w, r, noCookieRedirectURL, http.StatusMovedPermanently)
+			respondError(w, r, ErrNoAuth)
 			return ""
 		}
 
@@ -32,5 +32,12 @@ func userIDFromCookie(w http.ResponseWriter, r *http.Request, noCookieRedirectUR
 		return ""
 	}
 
-	return claims["userID"].(string)
+	if userID, ok := claims["userID"]; ok {
+		if userID != "" {
+			return claims["userID"].(string)
+		}
+	}
+
+	respondError(w, r, ErrNoAuth)
+	return ""
 }

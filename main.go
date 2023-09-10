@@ -31,8 +31,6 @@ func main() {
 
 	jwtKey := []byte(os.Getenv("JWT_KEY"))
 
-	noAccessTokenURL := os.Getenv("NO_ACCESS_TOKEN_URL")
-
 	register, err := handlers.Register(db, db, db, jwtKey /*, serviceEndpoint */)
 	if err != nil {
 		log.Fatalf("create Register handler: %s", err)
@@ -45,9 +43,11 @@ func main() {
 		jwtKey,
 	))
 
-	r.Get("/tags", handlers.GetTags(db, db, noAccessTokenURL, jwtKey))
+	r.Get("/tags", handlers.GetTags(db, db, jwtKey))
 
-	r.Post("/tags", handlers.PostTags(db, db, noAccessTokenURL, jwtKey))
+	r.Post("/tags", handlers.PostTags(db, db, jwtKey))
+
+	r.Get("/findMatch", handlers.FindMatch(db, db, db, db, jwtKey))
 
 	log.Fatalln(http.ListenAndServe(":"+os.Getenv("PORT"), r))
 }

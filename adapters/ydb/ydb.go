@@ -187,7 +187,7 @@ func (c *Client) GetTaggedUser(userID string) (*models.TaggedUser, error) {
 
 func (c *Client) GetTag(tagID string) (*models.Tag, error) {
 	if tagID == "" {
-		return nil, errors.New("tagsIDs are empty")
+		return nil, errors.New("tagID is empty")
 	}
 
 	err := c.createTableIfNotExists("tags", &models.Tag{})
@@ -214,6 +214,35 @@ func (c *Client) GetTag(tagID string) (*models.Tag, error) {
 	return tag, nil
 }
 
+func (c *Client) GetPartner(userId string) (*models.Partner, error) {
+	if userId == "" {
+		return nil, errors.New("partnerID are empty")
+	}
+
+	err := c.createTableIfNotExists("partners", &models.Partner{})
+	if err != nil {
+		return nil, errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("partners")
+
+	partner := new(models.Partner)
+
+	it := table.Scan().
+		Filter("'UserID' = ?", userId).
+		Iter()
+	it.Next(partner)
+
+	if it.Err() != nil {
+		if errors.Is(it.Err(), dynamo.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(it.Err(), "scan table")
+	}
+
+	return partner, nil
+}
+
 func (c *Client) SaveTag(tag *models.Tag) error {
 	err := c.createTableIfNotExists("tags", &models.Tag{})
 	if err != nil {
@@ -237,6 +266,58 @@ func (c *Client) SaveTag(tag *models.Tag) error {
 	}
 
 	return nil
+}
+
+func (c *Client) SavePartner(p *models.Partner) error {
+	err := c.createTableIfNotExists("partners", &models.Partner{})
+	if err != nil {
+		return errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("partners")
+
+	err = table.Put(p).Run()
+	if err != nil {
+		return errors.Wrap(err, "put into the table")
+	}
+
+	return nil
+}
+
+func (c *Client) GetUsersWithTags(tags []string) ([]string, error) {
+	err := c.createTableIfNotExists("taggedUsers", &models.TaggedUser{})
+	if err != nil {
+		return nil, errors.Wrap(err, "create table")
+	}
+
+	table := c.db.Table("taggedUsers")
+
+	var items []string
+
+	it := table.Scan().
+		Filter("contains('Tags', ?)", tags).
+		Iter()
+
+	for {
+		var taggedUser models.TaggedUser
+
+		next := it.Next(&taggedUser)
+
+		if it.Err() != nil {
+			if errors.Is(it.Err(), dynamo.ErrNotFound) {
+				return nil, nil
+			}
+			return nil, errors.Wrap(it.Err(), "scan table")
+		}
+
+		items = append(items, taggedUser.UserID)
+
+		if !next {
+			break
+		}
+	}
+
+	return items, nil
 }
 
 func (c *Client) createTableIfNotExists(name string, from interface{}) error {

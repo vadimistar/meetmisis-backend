@@ -58,17 +58,18 @@ func Login(getUser getUser, jwtKey []byte) http.HandlerFunc {
 		})
 
 		w.WriteHeader(http.StatusOK)
-		render.JSON(w, r, registerLoginResponse{
+		render.JSON(w, r, successResponse{
 			Response: Response{
 				Status: statusSuccess,
 			},
-			Token: tokenString,
+			Data: registerLoginResponse{
+				Token: tokenString,
+			},
 		})
 	}
 }
 
 type registerLoginResponse struct {
-	Response
 	Token string `json:"token"`
 }
 
